@@ -1,0 +1,104 @@
+from flask import Flask, render_template_string
+import threading
+import webview
+
+app = Flask(__name__)
+
+# 爱心提示语
+heart_tips = [
+    "保持微笑~", "天天元气满满~", "别熬夜~", "记得想我~",
+    "好好吃饭~", "多喝水~", "每天开心~", "保持纯真~"
+]
+# 温馨提示语
+warm_tips = [
+    "多喝热水，好好爱自己，我想你了。",
+    "记得吃水果，每天元气满满。",
+    "少熬夜，愿烦恼都消失。",
+    "别太累，今天要开心，天冷多穿衣服。"
+]
+
+@app.route('/')
+def index():
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>喜欢你</title>
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden;
+                background: #000;
+            }
+            .popup {
+                position: fixed;
+                padding: 10px;
+                border-radius: 5px;
+                background: rgba(255, 255, 255, 0.8);
+                color: #333;
+                animation: popup 3s ease-in-out;
+            }
+            .heart-popup {
+                font-size: 14px;
+            }
+            .warm-popup {
+                font-size: 16px;
+                padding: 15px;
+            }
+            @keyframes popup {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.5);
+                }
+                20% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                80% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(1.2);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <script>
+            function showPopup(tips, className) {
+                const tip = tips[Math.floor(Math.random() * tips.length)];
+                const popup = document.createElement('div');
+                popup.className = `popup ${className}`;
+                popup.textContent = tip;
+                popup.style.left = `${Math.random() * (window.innerWidth - (className === 'heart-popup' ? 100 : 200))}px`;
+                popup.style.top = `${Math.random() * (window.innerHeight - (className === 'heart-popup' ? 50 : 100))}px`;
+                popup.style.backgroundColor = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, ${className === 'heart-popup' ? 0.8 : 0.9})`;
+                document.body.appendChild(popup);
+                setTimeout(() => {
+                    document.body.removeChild(popup);
+                }, className === 'heart-popup' ? 3000 : 5000);
+            }
+
+            setInterval(() => showPopup({{ heart_tips|tojson }}, 'heart-popup'), 800);
+            setInterval(() => showPopup({{ warm_tips|tojson }}, 'warm-popup'), 3000);
+        </script>
+    </body>
+    </html>
+    """
+    return render_template_string(html_content, heart_tips=heart_tips, warm_tips=warm_tips)
+
+def run_app():
+    app.run(host='0.0.0.0', port=5000, debug=False)
+
+if __name__ == '__main__':
+    # 启动 Flask 服务
+    t = threading.Thread(target=run_app)
+    t.daemon = True
+    t.start()
+    # 启动本地窗口（若只需手机访问，可注释以下两行）
+    webview.create_window("对你的喜欢不止于此", "http://127.0.0.1:5000")
+    webview.start()
